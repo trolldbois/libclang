@@ -669,58 +669,55 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
 // JAL: 2013 
 // TODO CXString clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor cursor, int num) {
 // TODO CharUnits getAlignment()
-long long clang_getRecordSize(CXTranslationUnit TU, CXCursor cursor) {
-  assert(clang_isDeclaration(cursor.kind) && "isDeclaration == FALSE");
+long long clang_getRecordSize(CXTranslationUnit TU, CXCursor C) {
+  if (  ((C.kind != CXCursor_StructDecl) &&  
+         (C.kind != CXCursor_UnionDecl) && 
+         (C.kind != CXCursor_ClassDecl)) ||
+         (!clang_isDeclaration(C.kind)) )
+    return -1;
 
-  assert( ((cursor.kind == CXCursor_StructDecl) or 
-            (cursor.kind == CXCursor_UnionDecl) or 
-            (cursor.kind == CXCursor_ClassDecl)) && "bad declaration kind");
-  // get the context
-  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
-  ASTContext &context = CXXUnit->getASTContext();
-  Decl *D = getCursorDecl(cursor); // RecordDecl is not Decl
-  assert(D && "no cursor decl");
-  assert(classof(static_cast<RecordDecl*>(D)) && "Invalid Kind, not a RecordDecl!");
+  const Decl *D = static_cast<const Decl*>(C.data[0]);
+  ASTUnit *AU = cxcursor::getCursorASTUnit(C);
+  ASTContext &Ctx = AU->getASTContext();
+  
   // get the layout for a record
-  RecordDecl *RD = static_cast<RecordDecl*>(D);
-  const ASTRecordLayout &layout = context.getASTRecordLayout(RD);
+  const RecordDecl *RD = static_cast<const RecordDecl*>(D);
+  const ASTRecordLayout &layout = Ctx.getASTRecordLayout(RD);
   CharUnits size = layout.getSize();
   return size.getQuantity();
 }
 
-long long clang_getRecordAlignment(CXTranslationUnit TU, CXCursor cursor) {
-  assert(clang_isDeclaration(cursor.kind) && "isDeclaration == FALSE");
+long long clang_getRecordAlignment(CXTranslationUnit TU, CXCursor C) {
+  if (  ((C.kind != CXCursor_StructDecl) &&  
+         (C.kind != CXCursor_UnionDecl) && 
+         (C.kind != CXCursor_ClassDecl)) ||
+         (!clang_isDeclaration(C.kind)) )
+    return -1;
 
-  assert( ((cursor.kind == CXCursor_StructDecl) or 
-            (cursor.kind == CXCursor_UnionDecl) or 
-            (cursor.kind == CXCursor_ClassDecl)) && "bad declaration kind");
-  // get the context
-  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
-  ASTContext &context = CXXUnit->getASTContext();
-  Decl *D = getCursorDecl(cursor); // RecordDecl is not Decl
-  assert(D && "no cursor decl");
-  assert(classof(static_cast<RecordDecl*>(D)) && "Invalid Kind, not a RecordDecl!");
+  const Decl *D = static_cast<const Decl*>(C.data[0]);
+  ASTUnit *AU = cxcursor::getCursorASTUnit(C);
+  ASTContext &Ctx = AU->getASTContext();
+
   // get the layout for a record
-  RecordDecl *RD = static_cast<RecordDecl*>(D);
-  const ASTRecordLayout &layout = context.getASTRecordLayout(RD);
+  const RecordDecl *RD = static_cast<const RecordDecl*>(D);
+  const ASTRecordLayout &layout = Ctx.getASTRecordLayout(RD);
   CharUnits align = layout.getAlignment();
   return align.getQuantity(); // TODO ?? .getSExtValue() 
 }
 
-long long clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor cursor) {
-  assert(clang_isDeclaration(cursor.kind) && "isDeclaration == FALSE");
+long long clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor C) {
+  if ( (C.kind != CXCursor_FieldDecl) ||
+        (!clang_isDeclaration(C.kind)) )
+    return -1;
 
-  assert( (cursor.kind == CXCursor_FieldDecl) && "bad declaration kind");
-  // get the context
-  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
-  ASTContext &context = CXXUnit->getASTContext();
-  Decl *D = getCursorDecl(cursor); // RecordDecl is not Decl
-  assert(D && "no cursor decl");
-  assert(classof(static_cast<FieldDecl*>(D)) && "Invalid Kind, not a FieldDecl!");
+  const Decl *D = static_cast<const Decl*>(C.data[0]);
+  ASTUnit *AU = cxcursor::getCursorASTUnit(C);
+  ASTContext &Ctx = AU->getASTContext();
+
   // get the layout for a record
-  FieldDecl *F = static_cast<FieldDecl*>(D);
+  const FieldDecl *F = static_cast<const FieldDecl*>(D);
   unsigned FieldNo = F->getFieldIndex();
-  const ASTRecordLayout &layout = context.getASTRecordLayout(F->getParent());
+  const ASTRecordLayout &layout = Ctx.getASTRecordLayout(F->getParent());
   return layout.getFieldOffset( FieldNo ); // TODO ?? .getSExtValue() 
 }
 
