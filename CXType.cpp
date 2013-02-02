@@ -16,10 +16,12 @@
 #include "CXString.h"
 #include "CXTranslationUnit.h"
 #include "CXType.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Frontend/ASTUnit.h"
 
@@ -662,5 +664,66 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
 
   return cxstring::createCXString(encoding);
 }
+
+// FIXME:
+// JAL: 2013 
+// TODO CXString clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor cursor, int num) {
+// TODO CharUnits getAlignment()
+long long clang_getRecordSize(CXTranslationUnit TU, CXCursor cursor) {
+  assert(clang_isDeclaration(cursor.kind) && "isDeclaration == FALSE");
+
+  assert( ((cursor.kind == CXCursor_StructDecl) or 
+            (cursor.kind == CXCursor_UnionDecl) or 
+            (cursor.kind == CXCursor_ClassDecl)) && "bad declaration kind");
+  // get the context
+  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
+  ASTContext &context = CXXUnit->getASTContext();
+  Decl *D = getCursorDecl(cursor); // RecordDecl is not Decl
+  assert(D && "no cursor decl");
+  assert(classof(static_cast<RecordDecl*>(D)) && "Invalid Kind, not a RecordDecl!");
+  // get the layout for a record
+  RecordDecl *RD = static_cast<RecordDecl*>(D);
+  const ASTRecordLayout &layout = context.getASTRecordLayout(RD);
+  CharUnits size = layout.getSize();
+  return size.getQuantity();
+}
+
+long long clang_getRecordAlignment(CXTranslationUnit TU, CXCursor cursor) {
+  assert(clang_isDeclaration(cursor.kind) && "isDeclaration == FALSE");
+
+  assert( ((cursor.kind == CXCursor_StructDecl) or 
+            (cursor.kind == CXCursor_UnionDecl) or 
+            (cursor.kind == CXCursor_ClassDecl)) && "bad declaration kind");
+  // get the context
+  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
+  ASTContext &context = CXXUnit->getASTContext();
+  Decl *D = getCursorDecl(cursor); // RecordDecl is not Decl
+  assert(D && "no cursor decl");
+  assert(classof(static_cast<RecordDecl*>(D)) && "Invalid Kind, not a RecordDecl!");
+  // get the layout for a record
+  RecordDecl *RD = static_cast<RecordDecl*>(D);
+  const ASTRecordLayout &layout = context.getASTRecordLayout(RD);
+  CharUnits align = layout.getAlignment();
+  return align.getQuantity(); // TODO ?? .getSExtValue() 
+}
+
+long long clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor cursor) {
+  assert(clang_isDeclaration(cursor.kind) && "isDeclaration == FALSE");
+
+  assert( (cursor.kind == CXCursor_FieldDecl) && "bad declaration kind");
+  // get the context
+  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
+  ASTContext &context = CXXUnit->getASTContext();
+  Decl *D = getCursorDecl(cursor); // RecordDecl is not Decl
+  assert(D && "no cursor decl");
+  assert(classof(static_cast<FieldDecl*>(D)) && "Invalid Kind, not a FieldDecl!");
+  // get the layout for a record
+  FieldDecl *F = static_cast<FieldDecl*>(D);
+  unsigned FieldNo = F->getFieldIndex();
+  const ASTRecordLayout &layout = context.getASTRecordLayout(F->getParent());
+  return layout.getFieldOffset( FieldNo ); // TODO ?? .getSExtValue() 
+}
+
+
 
 } // end: extern "C"
