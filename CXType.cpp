@@ -666,10 +666,10 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
 }
 
 QuantityType clang_getRecordSize(CXTranslationUnit TU, CXCursor C) {
-  if (  ((C.kind != CXCursor_StructDecl) &&  
-         (C.kind != CXCursor_UnionDecl) && 
-         (C.kind != CXCursor_ClassDecl)) ||
-         (!clang_isDeclaration(C.kind)) )
+  if ( ((C.kind != CXCursor_StructDecl) &&  
+        (C.kind != CXCursor_UnionDecl) && 
+        (C.kind != CXCursor_ClassDecl)) ||
+        !clang_isDeclaration(C.kind) )
     return -1;
 
   const Decl *D = static_cast<const Decl*>(C.data[0]);
@@ -684,10 +684,10 @@ QuantityType clang_getRecordSize(CXTranslationUnit TU, CXCursor C) {
 }
 
 QuantityType clang_getRecordAlignment(CXTranslationUnit TU, CXCursor C) {
-  if (  ((C.kind != CXCursor_StructDecl) &&  
-         (C.kind != CXCursor_UnionDecl) && 
-         (C.kind != CXCursor_ClassDecl)) ||
-         (!clang_isDeclaration(C.kind)) )
+  if ( ((C.kind != CXCursor_StructDecl) &&  
+        (C.kind != CXCursor_UnionDecl) && 
+        (C.kind != CXCursor_ClassDecl)) ||
+        !clang_isDeclaration(C.kind) )
     return -1;
 
   const Decl *D = static_cast<const Decl*>(C.data[0]);
@@ -714,7 +714,7 @@ uint64_t clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor C) {
   const FieldDecl *F = static_cast<const FieldDecl*>(D);
   unsigned FieldNo = F->getFieldIndex();
   const ASTRecordLayout &layout = Ctx.getASTRecordLayout(F->getParent());
-  return layout.getFieldOffset( FieldNo ); 
+  return layout.getFieldOffset(FieldNo); 
 }
 
 } // end: extern "C"
