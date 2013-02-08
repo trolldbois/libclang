@@ -665,11 +665,7 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   return cxstring::createDup(encoding);
 }
 
-// FIXME:
-// JAL: 2013 
-// TODO CXString clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor cursor, int num) {
-// TODO CharUnits getAlignment()
-long long clang_getRecordSize(CXTranslationUnit TU, CXCursor C) {
+QuantityType clang_getRecordSize(CXTranslationUnit TU, CXCursor C) {
   if (  ((C.kind != CXCursor_StructDecl) &&  
          (C.kind != CXCursor_UnionDecl) && 
          (C.kind != CXCursor_ClassDecl)) ||
@@ -687,7 +683,7 @@ long long clang_getRecordSize(CXTranslationUnit TU, CXCursor C) {
   return size.getQuantity();
 }
 
-long long clang_getRecordAlignment(CXTranslationUnit TU, CXCursor C) {
+QuantityType clang_getRecordAlignment(CXTranslationUnit TU, CXCursor C) {
   if (  ((C.kind != CXCursor_StructDecl) &&  
          (C.kind != CXCursor_UnionDecl) && 
          (C.kind != CXCursor_ClassDecl)) ||
@@ -702,10 +698,10 @@ long long clang_getRecordAlignment(CXTranslationUnit TU, CXCursor C) {
   const RecordDecl *RD = static_cast<const RecordDecl*>(D);
   const ASTRecordLayout &layout = Ctx.getASTRecordLayout(RD);
   CharUnits align = layout.getAlignment();
-  return align.getQuantity(); // TODO ?? .getSExtValue() 
+  return align.getQuantity(); 
 }
 
-long long clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor C) {
+uint64_t clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor C) {
   if ( (C.kind != CXCursor_FieldDecl) ||
         (!clang_isDeclaration(C.kind)) )
     return -1;
@@ -718,9 +714,7 @@ long long clang_getRecordFieldOffset(CXTranslationUnit TU, CXCursor C) {
   const FieldDecl *F = static_cast<const FieldDecl*>(D);
   unsigned FieldNo = F->getFieldIndex();
   const ASTRecordLayout &layout = Ctx.getASTRecordLayout(F->getParent());
-  return layout.getFieldOffset( FieldNo ); // TODO ?? .getSExtValue() 
+  return layout.getFieldOffset( FieldNo ); 
 }
-
-
 
 } // end: extern "C"
